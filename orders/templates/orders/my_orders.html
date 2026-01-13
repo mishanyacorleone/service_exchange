@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Мои заказы{% endblock %}
+
+{% block content %}
+<h2>Мои заказы</h2>
+{% if customer_orders %}
+    <div class="row">
+        {% for order in customer_orders %}
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{% url 'order_detail' order.id %}">{{ order.title }}</a>
+                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Статус: {{ order.get_status_display }}</small>
+                            {% if order.assigned_executor %}
+                                <small class="text-info">Назначен: {{ order.assigned_executor.username }}</small>
+                            {% endif %}
+                        </div>
+                        <!-- Добавляем ссылку на редактирование -->
+                        <div class="mt-2">
+                            <a href="{% url 'edit_order' order.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <a href="{% url 'create_order' %}" class="btn btn-success">Создать новый заказ</a>
+{% else %}
+    <p class="text-muted">У вас пока нет заказов.</p>
+    <a href="{% url 'create_order' %}" class="btn btn-success">Создать первый заказ</a>
+{% endif %}
+{% endblock %}

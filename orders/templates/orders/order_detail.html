@@ -1,0 +1,143 @@
+<!-- orders/templates/orders/order_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ order.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>{{ order.title }}</h1>
+        <p>{{ order.description|linebreaks }}</p>
+        <ul class="list-unstyled">
+            <li><strong>Заказчик:</strong> {{ order.customer.username }}</li>
+            <li><strong>Статус:</strong>
+                {% if is_customer %}
+                    <!-- Форма изменения статуса ТОЛЬКО для заказчика -->
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <select name="new_status" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                            <option value="" disabled selected>Изменить статус</option>
+                            {% for status_choice, status_label in allowed_status_transitions %}
+                                <option value="{{ status_choice }}" {% if order.status == status_choice %}selected{% endif %}>{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="change_status" value="1">
+                    </form>
+                {% else %}
+                    <!-- Просто отображаем текущий статус для всех остальных (исполнитель, гость) -->
+                    {{ order.get_status_display }}
+                {% endif %}
+            </li>
+            {% if order.assigned_executor %}
+                <li><strong>Назначенный исполнитель:</strong>
+                    {% if is_customer %}
+                        {{ order.assigned_executor.username }}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" name="unassign_executor" class="btn btn-sm btn-outline-danger" onclick="return confirm('Вы уверены, что хотите отменить назначенного исполнителя?')">Отменить</button>
+                        </form>
+                    {% else %}
+                        {{ order.assigned_executor.username }}
+                    {% endif %}
+                </li>
+            {% endif %}
+            {% if order.deadline %}
+                <li><strong>Срок:</strong> {{ order.deadline }}</li>
+            {% endif %}
+            {% if order.budget %}
+                <li><strong>Бюджет:</strong> {{ order.budget }}</li>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Действия</h5>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    {% if is_executor %}
+                        {% if user_can_bid %}
+                            <h6>Откликнуться на заказ</h6>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="{{ bid_form.message.id_for_label }}" class="form-label">Сообщение</label>
+                                    {{ bid_form.message }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ bid_form.price_proposal.id_for_label }}" class="form-label">Предлагаемая цена</label>
+                                    {{ bid_form.price_proposal }}
+                                </div>
+                                <button type="submit" name="bid_message" class="btn btn-primary">Отправить отклик</button>
+                            </form>
+                        {% else %}
+                            <p class="text-muted">Вы уже откликнулись на этот заказ или заказ уже не открыт.</p>
+                        {% endif %}
+                    {% elif is_customer %}
+                        {% if order.status == 'open' %}
+                            <h6>Выбрать исполнителя</h6>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <select name="executor_id" class="form-select" required>
+                                        <option value="" disabled selected>Выберите исполнителя</option>
+                                        {% for executor_id, username in bidders_for_selection %}
+                                            <option value="{{ executor_id }}">{{ username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" name="assign_executor" class="btn btn-success">Назначить исполнителя</button>
+                            </form>
+                        {% endif %}
+                        <p class="text-info">Вы - заказчик этого заказа.</p>
+                        <a href="{% url 'edit_order' order.id %}" class="btn btn-warning">Редактировать заказ</a>
+                    {% elif is_assigned_executor %}
+                        <p class="text-success">Вы - назначенный исполнитель этого заказа.</p>
+                        <!-- Убираем форму изменения статуса для исполнителя -->
+                        <!-- {% if order.status == 'in_progress' %}
+                            <form method="post" class="mt-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="new_status" value="completed">
+                                <input type="hidden" name="change_status" value="1">
+                                <button type="submit" class="btn btn-success btn-sm">Отметить как выполненный</button>
+                            </form>
+                        {% endif %} -->
+                        <!-- Если хочешь, можешь оставить возможность отметить как выполненный, но это отдельная логика -->
+                        <!-- Добавим отдельную кнопку/ссылку для этого, если она нужна, и обработаем в view -->
+                        {% if order.status == 'in_progress' %}
+                            <a href="{% url 'mark_order_completed' order.id %}" class="btn btn-success btn-sm" onclick="return confirm('Вы уверены, что хотите отметить заказ как выполненный?')">Отметить как выполненный</a>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">Войдите, чтобы откликнуться или выбрать исполнителя.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>Отклики ({{ bids|length }})</h3>
+        {% if bids %}
+            {% for bid in bids %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ bid.executor.username }} ({{ bid.executor.profile.specialization|default:"-" }})</h6>
+                        {% if bid.message %}
+                            <p class="card-text">{{ bid.message }}</p>
+                        {% endif %}
+                        {% if bid.price_proposal %}
+                            <p class="text-success"><strong>Предлагаемая цена:</strong> {{ bid.price_proposal }}</p>
+                        {% endif %}
+                        <small class="text-muted">Отклик подан: {{ bid.created_at }}</small>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">Пока нет откликов.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

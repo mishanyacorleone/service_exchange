@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Список исполнителей{% endblock %}
+
+{% block content %}
+<h2>Исполнители</h2>
+{% if executors %}
+    <div class="row">
+        {% for executor in executors %}
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ executor.username }}</h5>
+                        <p class="card-text">
+                            {% if executor.profile.specialization %}
+                                <strong>Специализация:</strong> {{ executor.profile.specialization }}
+                            {% else %}
+                                Специализация: Не указана
+                            {% endif %}
+                        </p>
+                        {% if executor.profile.rating %}
+                            <p class="text-warning"><strong>Рейтинг:</strong> {{ executor.profile.rating }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-muted">Пока нет зарегистрированных исполнителей.</p>
+{% endif %}
+{% endblock %}

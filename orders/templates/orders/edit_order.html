@@ -1,0 +1,46 @@
+<!-- orders/templates/orders/edit_order.html -->
+{% extends "base.html" %}
+
+{% block title %}Редактировать заказ "{{ order.title }}"{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2>Редактировать заказ: {{ order.title }}</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">Название</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="text-danger">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.deadline.id_for_label }}" class="form-label">Срок выполнения</label>
+                {{ form.deadline }}
+                {% if form.deadline.errors %}
+                    <div class="text-danger">{{ form.deadline.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.budget.id_for_label }}" class="form-label">Бюджет</label>
+                {{ form.budget }}
+                {% if form.budget.errors %}
+                    <div class="text-danger">{{ form.budget.errors }}</div>
+                {% endif %}
+            </div>
+            <!-- Не включаем поля customer и assigned_executor в форму редактирования -->
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            <a href="{% url 'order_detail' order.id %}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
