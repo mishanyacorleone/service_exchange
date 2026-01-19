@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
 from core.models import BaseModel
 # Create your models here.
 
@@ -34,6 +35,7 @@ class Order(BaseModel):
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+            
 
     def get_allowed_status_transitions(self):
         transitions = {

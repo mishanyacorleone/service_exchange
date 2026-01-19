@@ -62,9 +62,10 @@ class CustomUserAdmin(UserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
+from import_export.admin import ExportActionMixin
 # Дополнительно регистрируем UserProfile отдельно — для экспорта!
 @admin.register(UserProfile)
-class UserProfileAdmin(ImportExportModelAdmin):
+class UserProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = UserProfileResource
     list_display = ('user', 'role', 'specialization', 'rating')
     list_filter = ('role',)

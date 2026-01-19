@@ -2,6 +2,7 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from import_export.admin import ExportActionMixin
 from .models import Bid, Order
 
 
@@ -50,7 +51,7 @@ class BidInline(admin.TabularInline):
 
 # === Админки с поддержкой экспорта ===
 @admin.register(Order)
-class OrderAdmin(ImportExportModelAdmin):  # ← было admin.ModelAdmin
+class OrderAdmin(ExportActionMixin, admin.ModelAdmin):  # ← было admin.ModelAdmin
     resource_class = OrderResource
     list_display = ('title', 'customer', 'status', 'assigned_executor', 'created_at')
     list_filter = ('status', 'created_at', 'customer')
@@ -60,7 +61,7 @@ class OrderAdmin(ImportExportModelAdmin):  # ← было admin.ModelAdmin
 
 
 @admin.register(Bid)
-class BidAdmin(ImportExportModelAdmin):  # ← было admin.ModelAdmin
+class BidAdmin(ExportActionMixin, admin.ModelAdmin):  # ← было admin.ModelAdmin
     resource_class = BidResource
     list_display = ('order', 'executor', 'price_proposal', 'created_at')
     list_filter = ('created_at', 'executor')
